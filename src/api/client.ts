@@ -3,7 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Zde nastavte adresu vašeho API
-const API_URL = 'https://tvuj-server.cz/api';
+const API_URL = 'https://timer.softcode.cz/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
