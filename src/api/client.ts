@@ -1,45 +1,47 @@
+// src/api/client.ts
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://vase-api-adresa.cz/api';
+// Zde nastavte adresu vašeho API
+const API_URL = 'https://tvuj-server.cz/api';
 
-class ApiClient {
-  private static instance: ApiClient;
-  private axiosInstance: AxiosInstance;
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  private constructor() {
-    this.axiosInstance = axios.create({
-      baseURL: API_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Přidání interceptoru pro automatické přidání JWT tokenu
-    this.axiosInstance.interceptors.request.use(
-      async (config) => {
-        const token = await AsyncStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  public static getInstance(): ApiClient {
-    if (!ApiClient.instance) {
-      ApiClient.instance = new ApiClient();
+// Nastavíme interceptor pro automatické přidávání tokenu
+apiClient.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return ApiClient.instance;
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  public getAxiosInstance(): AxiosInstance {
-    return this.axiosInstance;
+// Přidáme interceptor pro handle vypršení tokenu
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // Pokud token vypršel, odhlásíme uživatele
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+
+      // Zde můžete přidat kód pro přesměrování na přihlašovací obrazovku
+    }
+    return Promise.reject(error);
   }
-}
+);
 
-export default ApiClient.getInstance().getAxiosInstance();
+export default apiClient;
