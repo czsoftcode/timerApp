@@ -65,37 +65,26 @@ const LoadingScreen = () => (
 );
 
 // Hlavní navigace aplikace
-const AppNavigator = () => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
+export function AppNavigator() {
   return (
-    <ActivityTracker>
-      <NavigationContainer>
-        <Stack.Navigator>
-          {!user ? (
-            // Obrazovky pro nepřihlášené uživatele
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{ headerShown: false }}
-            />
-          ) : (
-            // Obrazovky pro přihlášené uživatele
-            <Stack.Screen
-              name="Main"
-              component={MainTabs}
-              options={{ headerShown: false }}
-            />
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ActivityTracker>
+    <Stack.Navigator initialRouteName="Dashboard">
+      <Stack.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ title: 'Dashboard' }}
+      />
+      {/* ← Here’s the important bit: */}
+      <Stack.Screen
+        name="Project"            // ← this string must match navigation.navigate('Project', …)
+        component={ProjectScreen} // ← and point to your ProjectScreen
+        options={({ route }) => ({
+          title: route.params.name, // shows the project’s name in the header
+        })}
+      />
+      {/* other screens… */}
+    </Stack.Navigator>
   );
-};
+}
 
 const styles = StyleSheet.create({
   loadingContainer: {

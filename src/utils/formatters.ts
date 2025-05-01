@@ -64,3 +64,31 @@ export const formatDateTime = (date: Date): string => {
 
   return `${formatDate(date)} ${formatTime(date)}`;
 };
+
+/**
+ * Funkce pro formátování trvání v sekundách na formát "Xh Ym"
+ */
+export const formatDuration = (seconds: number): string => {
+  if (typeof seconds !== 'number' || isNaN(seconds) || seconds < 0) {
+    console.warn('Neplatné sekundy pro formatDuration:', seconds);
+    return '0h 0m';
+  }
+
+  try {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours === 0 && minutes === 0) {
+      return '0h 0m';
+    } else if (hours === 0) {
+      return `${minutes}m`;
+    } else if (minutes === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h ${minutes}m`;
+    }
+  } catch (error) {
+    console.error('Chyba při formátování trvání:', error);
+    return '0h 0m';
+  }
+};

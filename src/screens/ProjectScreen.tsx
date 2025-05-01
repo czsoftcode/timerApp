@@ -141,7 +141,7 @@ const ProjectScreen = () => {
         loadProject();
         refreshRunningEntry();
       }
-    }, [projectId, loadProject, refreshRunningEntry])
+    }, [projectId, loadProject])
   );
 
   // Obnovení dat při zatažení dolů (pull-to-refresh)

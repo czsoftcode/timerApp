@@ -2,12 +2,32 @@
 import apiClient from './client';
 import { TimeEntry } from '../types/api.types';
 
-export const getTimeEntries = async (): Promise<TimeEntry[]> => {
+interface TimeEntriesResponse {
+  timeEntries: TimeEntry[];
+}
+
+/**
+ * Pokud předáte { projectId }, vrátí jen ty položky, které ke
+ * projektu patří, jinak vrátí všechny.
+ */
+export const getTimeEntries = async (
+  opts: { projectId?: number } = {}
+): Promise<TimeEntry[]> => {
   try {
-    const response = await apiClient.get('/time-entries');
-    return response.data.timeEntries;
-  } catch (error) {
-    console.error('Chyba při načítání časových záznamů', error);
+    // 1) stáhnu všechny záznamy
+    const response = await apiClient.get<TimeEntriesResponse>('/time-entries');
+    const all = response.data.timeEntries ?? [];
+
+    // 2) pokud mám projectId, odfiltruju
+    if (opts.projectId !== undefined) {
+      return all.filter((e) => e.project?.id === opts.projectId);
+    }
+    return all;
+  } catch (error: any) {
+    console.error(
+      `Chyba při načítání časových záznamů (${opts.projectId ?? 'all'}):`,
+      error
+    );
     throw new Error('Nepodařilo se načíst časové záznamy');
   }
 };

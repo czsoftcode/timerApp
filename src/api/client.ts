@@ -36,19 +36,16 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      // Pokud token vypršel, odhlásíme uživatele
+    const status = error.response?.status;
+    if (status === 401) {
+      // 1) smažeme vypršelý token
       await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-
-      // Vyvolat event pro odhlášení
-      dummyEventEmitter.emit(LOGOUT_EVENT);
+      // 2) možno i zavolat signOut() z AuthContext, pokud ho exportujete
+      // 3) zobrazit uživateli alert
+      Alert.alert('Sezení vypršelo', 'Prosím přihlašte se znovu.');
+      // 4) přesměrovat na přihlášení
+      navigate('Login');
     }
-
     return Promise.reject(error);
   }
 );
