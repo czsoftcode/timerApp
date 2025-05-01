@@ -13,6 +13,7 @@ import TimeEntryScreen from '../screens/TimeEntryScreen';
 import { useAuth } from '../contexts/AuthContext';
 import ActivityTracker from '../components/ActivityTracker';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { navigationRef } from './RootNavigation';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -64,27 +65,31 @@ const LoadingScreen = () => (
   </View>
 );
 
-// Hlavní navigace aplikace
-export function AppNavigator() {
+// Hlavní navigátor pro aplikaci
+const AppNavigator = () => {
+  const { user, loading } = useAuth();
+
+  // Zobrazíme loading screen, když se načítá stav autentizace
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <Stack.Navigator initialRouteName="Dashboard">
-      <Stack.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{ title: 'Dashboard' }}
-      />
-      {/* ← Here’s the important bit: */}
-      <Stack.Screen
-        name="Project"            // ← this string must match navigation.navigate('Project', …)
-        component={ProjectScreen} // ← and point to your ProjectScreen
-        options={({ route }) => ({
-          title: route.params.name, // shows the project’s name in the header
-        })}
-      />
-      {/* other screens… */}
-    </Stack.Navigator>
+    <NavigationContainer ref={navigationRef}>
+      <ActivityTracker>
+        {user ? (
+          // Navigace pro přihlášené uživatele
+          <MainTabs />
+        ) : (
+          // Navigace pro nepřihlášené uživatele
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Login" component={LoginScreen} />
+          </Stack.Navigator>
+        )}
+      </ActivityTracker>
+    </NavigationContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   loadingContainer: {

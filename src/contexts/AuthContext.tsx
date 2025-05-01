@@ -5,6 +5,7 @@ import { User } from '../types/api.types';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logoutEventEmitter, LOGOUT_EVENT } from '../api/client';
+import { navigationRef } from '../navigation/RootNavigation';
 
 interface AuthContextData {
   user: User | null;
@@ -42,6 +43,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       await apiLogout();
       setUser(null);
+
+      // Přesměrujeme na přihlašovací obrazovku
+      if (navigationRef.isReady()) {
+        navigationRef.navigate('Login');
+      }
     } catch (error) {
       console.error('Chyba při odhlašování', error);
     }
@@ -66,9 +72,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Funkce pro sledování změn stavu aplikace (aktivní/na pozadí)
   const handleAppStateChange = useCallback((nextAppState: AppStateStatus) => {
     if (nextAppState === 'active' && appStateRef.current !== 'active') {
-      // Aplikace byla obnovena z pozadí - automaticky odhlásíme uživatele
-      console.log('Aplikace obnovena z pozadí - automatické odhlášení');
-      logout();
+      // Aplikace byla obnovena z pozadí - resetujeme časovač
+      resetInactivityTimer();
     } else if (nextAppState === 'background' || nextAppState === 'inactive') {
       // Aplikace přešla do pozadí - zrušíme časovač neaktivity
       if (inactivityTimerRef.current) {
@@ -78,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     appStateRef.current = nextAppState;
-  }, [logout]);
+  }, [resetInactivityTimer]);
 
   // Přihlášení uživatele
   const login = async (email: string, password: string) => {
@@ -100,10 +105,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Přidáme posluchač pro události odhlášení z API
     const handleLogout = () => {
       console.log('Automatické odhlášení - vypršení tokenu nebo 401 chyba');
-      logout();
+      // Nastavíme uživatele na null
+      setUser(null);
     };
 
-    // React Native NativeEventEmitter
+    // Nastavíme posluchač pro události odhlášení
     const logoutSubscription = logoutEventEmitter.addListener(LOGOUT_EVENT, handleLogout);
 
     return () => {
@@ -122,12 +128,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     async function loadUser() {
       try {
-        // Odstraníme token a uživatele při startu aplikace
-        await AsyncStorage.removeItem('token');
-        await AsyncStorage.removeItem('user');
-        setUser(null);
+        const userData = await getCurrentUser();
+        setUser(userData);
       } catch (error) {
-        console.error('Chyba při resetu session', error);
+        console.error('Chyba při načítání uživatele', error);
       } finally {
         setLoading(false);
       }

@@ -1,11 +1,11 @@
 // src/api/client.ts
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NativeEventEmitter, NativeModules } from 'react-native';
+import { NativeEventEmitter, NativeModules, Alert } from 'react-native';
+import { navigationRef } from '../navigation/RootNavigation';
 
-// Vytvoříme vlastní eventEmitter
-// Používáme prázdný nativní modul jako základ pro NativeEventEmitter
-const dummyEventEmitter = new NativeEventEmitter();
+// Vytvoříme vlastní eventEmitter pro komunikaci napříč aplikací
+export const logoutEventEmitter = new NativeEventEmitter();
 export const LOGOUT_EVENT = 'logout';
 
 // Zde nastavte adresu vašeho API
@@ -37,18 +37,42 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const status = error.response?.status;
+
+    // Když dostaneme 401 Unauthorized, znamená to vypršení tokenu
     if (status === 401) {
-      // 1) smažeme vypršelý token
-      await AsyncStorage.removeItem('token');
-      // 2) možno i zavolat signOut() z AuthContext, pokud ho exportujete
-      // 3) zobrazit uživateli alert
-      Alert.alert('Sezení vypršelo', 'Prosím přihlašte se znovu.');
-      // 4) přesměrovat na přihlášení
-      navigate('Login');
+      console.log('Token vypršel nebo je neplatný, automatické odhlášení');
+
+      try {
+        // 1) smažeme vypršelý token
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('user');
+
+        // 2) vyšleme událost pro ostatní komponenty
+        logoutEventEmitter.emit(LOGOUT_EVENT);
+
+        // 3) zobrazíme alert uživateli
+        Alert.alert(
+          'Sezení vypršelo',
+          'Vaše přihlášení vypršelo. Prosím, přihlaste se znovu.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // 4) přesměrujeme na přihlášení, pokud je navigace připravena
+                if (navigationRef.isReady()) {
+                  navigationRef.navigate('Login');
+                }
+              }
+            }
+          ]
+        );
+      } catch (logoutError) {
+        console.error('Chyba při zpracování vypršení tokenu:', logoutError);
+      }
     }
+
     return Promise.reject(error);
   }
 );
 
-export { dummyEventEmitter as logoutEventEmitter };
 export default apiClient;
