@@ -1,3 +1,4 @@
+// src/types/api.types.ts
 // Definice typů pro entity v aplikaci
 
 export interface User {
@@ -11,6 +12,12 @@ export interface Project {
   id: number;
   name: string;
   description?: string;
+  totalTime?: {
+    hours: number;
+    minutes: number;
+  };
+  // Pole časových záznamů, které můžeme dostávat s detaily projektu
+  timeEntries?: TimeEntry[];
 }
 
 export interface TimeEntry {
@@ -21,6 +28,9 @@ export interface TimeEntry {
   project: Project;
   isBillable: boolean;
   durationInHours?: number;
+  // Přidáné pole pro API
+  currency?: string;
+  rate?: number;
 }
 
 // Definice typů pro API požadavky a odpovědi
@@ -42,4 +52,4 @@ export interface TimeEntryStartRequest {
 
 export interface TimeEntryStartResponse {
   entry: TimeEntry;
-}
+}x
