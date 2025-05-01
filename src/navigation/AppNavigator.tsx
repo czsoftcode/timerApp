@@ -11,6 +11,8 @@ import ProjectsScreen from '../screens/ProjectsScreen';
 import ProjectScreen from '../screens/ProjectScreen';
 import TimeEntryScreen from '../screens/TimeEntryScreen';
 import { useAuth } from '../contexts/AuthContext';
+import ActivityTracker from '../components/ActivityTracker';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -55,36 +57,53 @@ const ProjectsStackNavigator = () => {
   );
 };
 
+// Loading komponenta
+const LoadingScreen = () => (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" color="#4286f4" />
+  </View>
+);
+
 // Hlavní navigace aplikace
 const AppNavigator = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    // Zde můžete zobrazit loading obrazovku
-    return null;
+    return <LoadingScreen />;
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        {!user ? (
-          // Obrazovky pro nepřihlášené uživatele
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
-        ) : (
-          // Obrazovky pro přihlášené uživatele
-          <Stack.Screen
-            name="Main"
-            component={MainTabs}
-            options={{ headerShown: false }}
-          />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <ActivityTracker>
+      <NavigationContainer>
+        <Stack.Navigator>
+          {!user ? (
+            // Obrazovky pro nepřihlášené uživatele
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+          ) : (
+            // Obrazovky pro přihlášené uživatele
+            <Stack.Screen
+              name="Main"
+              component={MainTabs}
+              options={{ headerShown: false }}
+            />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ActivityTracker>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+});
 
 export default AppNavigator;

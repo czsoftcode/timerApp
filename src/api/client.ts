@@ -2,6 +2,10 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Event pro informování o odhlášení (pro případ vypršení tokenu)
+export const logoutEvent = new EventTarget();
+export const LOGOUT_EVENT = 'logout';
+
 // Zde nastavte adresu vašeho API
 const API_URL = __DEV__
   ? 'http://localhost:8000/api'  // pro vývoj
@@ -33,6 +37,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -40,8 +45,10 @@ apiClient.interceptors.response.use(
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
 
-      // Zde můžete přidat kód pro přesměrování na přihlašovací obrazovku
+      // Vyvolat event pro odhlášení
+      logoutEvent.dispatchEvent(new Event(LOGOUT_EVENT));
     }
+
     return Promise.reject(error);
   }
 );
