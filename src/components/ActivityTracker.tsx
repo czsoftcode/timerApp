@@ -1,6 +1,6 @@
 // src/components/ActivityTracker.tsx
-import React, { useEffect } from 'react';
-import { TouchableWithoutFeedback, View } from 'react-native';
+import React, { useEffect, useCallback } from 'react';
+import { TouchableWithoutFeedback, View, GestureResponderEvent } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -8,6 +8,13 @@ import { useAuth } from '../contexts/AuthContext';
  */
 const ActivityTracker: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, resetInactivityTimer } = useAuth();
+
+  // Optimalizovaný handler pro reset časovače
+  const handleInteraction = useCallback(() => {
+    if (user) {
+      resetInactivityTimer();
+    }
+  }, [user, resetInactivityTimer]);
 
   // Při každém vykreslení resetujeme časovač neaktivity
   useEffect(() => {
@@ -24,7 +31,7 @@ const ActivityTracker: React.FC<{ children: React.ReactNode }> = ({ children }) 
   // Když je uživatel přihlášen, obalíme děti komponenty do TouchableWithoutFeedback
   // aby zachycovala interakce a resetovala časovač
   return (
-    <TouchableWithoutFeedback onPress={resetInactivityTimer}>
+    <TouchableWithoutFeedback onPress={handleInteraction}>
       <View style={{ flex: 1 }}>{children}</View>
     </TouchableWithoutFeedback>
   );

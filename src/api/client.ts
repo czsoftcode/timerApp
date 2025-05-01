@@ -1,15 +1,15 @@
 // src/api/client.ts
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeEventEmitter, NativeModules } from 'react-native';
 
-// Event pro informování o odhlášení (pro případ vypršení tokenu)
-export const logoutEvent = new EventTarget();
+// Vytvoříme vlastní eventEmitter
+// Používáme prázdný nativní modul jako základ pro NativeEventEmitter
+const dummyEventEmitter = new NativeEventEmitter();
 export const LOGOUT_EVENT = 'logout';
 
 // Zde nastavte adresu vašeho API
-const API_URL = __DEV__
-  ? 'http://localhost:8000/api'  // pro vývoj
-  : 'https://timer.softcode.cz/api';  // pro produkci
+const API_URL = 'https://timer.softcode.cz/api';  // pro produkci
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -46,11 +46,12 @@ apiClient.interceptors.response.use(
       await AsyncStorage.removeItem('user');
 
       // Vyvolat event pro odhlášení
-      logoutEvent.dispatchEvent(new Event(LOGOUT_EVENT));
+      dummyEventEmitter.emit(LOGOUT_EVENT);
     }
 
     return Promise.reject(error);
   }
 );
 
+export { dummyEventEmitter as logoutEventEmitter };
 export default apiClient;

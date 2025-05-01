@@ -1,6 +1,6 @@
 // src/components/InactivityMonitor.tsx
-import React, { useEffect } from 'react';
-import { Text, Modal, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, Modal, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 
 interface InactivityMonitorProps {
@@ -14,12 +14,12 @@ const InactivityMonitor: React.FC<InactivityMonitorProps> = ({
   warningThreshold = 55 * 60 * 1000 // Výchozí hodnota: 55 minut (5 minut před odhlášením)
 }) => {
   const { user, resetInactivityTimer } = useAuth();
-  const [showWarning, setShowWarning] = React.useState(false);
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setShowWarning(false);
-      return;
+      return () => {}; // Prázdná cleanup funkce
     }
 
     // Nastavení časovače pro zobrazení varování
@@ -48,7 +48,11 @@ const InactivityMonitor: React.FC<InactivityMonitorProps> = ({
       animationType="fade"
       onRequestClose={extendSession}
     >
-      <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.container}
+        activeOpacity={1}
+        onPress={extendSession}
+      >
         <View style={styles.content}>
           <Text style={styles.title}>Upozornění na neaktivitu</Text>
           <Text style={styles.message}>
@@ -57,8 +61,14 @@ const InactivityMonitor: React.FC<InactivityMonitorProps> = ({
           <Text style={styles.message}>
             Chcete-li pokračovat v práci, klepněte kamkoli na obrazovku.
           </Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={extendSession}
+          >
+            <Text style={styles.buttonText}>Pokračovat v práci</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </TouchableOpacity>
     </Modal>
   );
 };
@@ -86,6 +96,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 10,
+  },
+  button: {
+    backgroundColor: '#4286f4',
+    padding: 12,
+    borderRadius: 5,
+    marginTop: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

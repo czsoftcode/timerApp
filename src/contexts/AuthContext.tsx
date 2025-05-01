@@ -4,7 +4,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { User } from '../types/api.types';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logoutEvent, LOGOUT_EVENT } from '../api/client';
+import { logoutEventEmitter, LOGOUT_EVENT } from '../api/client';
 
 interface AuthContextData {
   user: User | null;
@@ -103,11 +103,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       logout();
     };
 
-    logoutEvent.addEventListener(LOGOUT_EVENT, handleLogout);
+    // React Native NativeEventEmitter
+    const logoutSubscription = logoutEventEmitter.addListener(LOGOUT_EVENT, handleLogout);
 
     return () => {
       subscription.remove();
-      logoutEvent.removeEventListener(LOGOUT_EVENT, handleLogout);
+      // Odstranění posluchače
+      logoutSubscription.remove();
+
       // Vyčistíme časovač při zničení komponenty
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
